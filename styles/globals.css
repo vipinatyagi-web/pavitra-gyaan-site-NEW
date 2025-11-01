@@ -30,3 +30,19 @@ a{color:inherit}
 .badge{display:inline-block;background:#181b2a;border:1px solid #282b3f;padding:6px 10px;border-radius:999px;color:#d5d9ff}
 .footer{color:var(--sub);font-size:12px;text-align:center;padding:28px 0 40px}
 .hr{height:1px;background:#1b1d2b;border:none;margin:16px 0}
+/* Stepper */
+.stepper{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.step{display:flex;gap:8px;align-items:center;padding:8px 12px;border:1px solid #2a2d46;border-radius:999px;background:#0e1024;color:#dfe3ff;cursor:pointer}
+.step.active{background:linear-gradient(135deg,#171a38,#1e2252);border-color:#3a3d5a}
+.step.done{opacity:.75}
+.dot{width:22px;height:22px;border-radius:999px;background:linear-gradient(135deg,#b388ff,#6ea8ff);color:#0a0c18;display:flex;align-items:center;justify-content:center;font-weight:800}
+.stepWrap{margin-top:8px}
+
+/* Accordion */
+.acc{border:1px solid #2a2d46;border-radius:12px;background:#0c0f1e;margin-top:8px}
+.accHead{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer}
+.accBody{padding:12px;border-top:1px solid #1f2340}
+
+/* Badges */
+.badge{display:inline-block;background:#14182c;border:1px solid #2a2d46;padding:6px 10px;border-radius:999px;color:#dfe3ff;font-size:12px}
+.btnGold{background:linear-gradient(135deg,#ffe08a,#ffd166);border:none;color:#111;padding:12px 18px;border-radius:12px;cursor:pointer;font-weight:800;box-shadow:0 8px 28px rgba(255,209,102,.25)}
