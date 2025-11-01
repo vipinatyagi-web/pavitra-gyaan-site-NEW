@@ -1,198 +1,198 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 export default function Home() {
   const [form, setForm] = useState({
     full_name: "Vipin",
-    dob: "1993-02-02",          // YYYY-MM-DD
-    tob: "10:00",               // 24h
+    dob: "1993-02-02",   // YYYY-MM-DD
+    tob: "10:00",        // 24h
     lat: "29.3909",
     lon: "76.9635",
-    tz_offset_minutes: "330"    // IST by default
+    tz_offset_minutes: "330" // IST default
   });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const reportRef = useRef(null);
 
-  // Auto-IST helper label
   const istLabel = useMemo(() => {
     const m = parseInt(form.tz_offset_minutes || "330", 10);
-    return m === 330 ? "IST (UTC+05:30)" : `UTC${m >= 0 ? "+" : ""}${(m/60).toFixed(2)}`;
+    if (m === 330) return "IST (UTC+05:30)";
+    const sign = m >= 0 ? "+" : "-";
+    const h = String(Math.floor(Math.abs(m)/60)).padStart(2,"0");
+    const mm = String(Math.abs(m)%60).padStart(2,"0");
+    return `UTC${sign}${h}:${mm}`;
   }, [form.tz_offset_minutes]);
 
-  function update(e) {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  }
-  function setIST() {
-    setForm({ ...form, tz_offset_minutes: "330" });
+  const update = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const setIST = () => setForm({ ...form, tz_offset_minutes: "330" });
+
+  async function submit(e){
+    e.preventDefault(); setLoading(true); setResult(null);
+    try{
+      const r = await fetch("/api/compute", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(form)
+      });
+      const j = await r.json();
+      if(!r.ok) throw new Error(j?.error || "Server error");
+      setResult(j);
+      // scroll to report
+      setTimeout(()=> reportRef.current?.scrollIntoView({behavior:"smooth"}), 120);
+    }catch(err){
+      alert("Error: " + err.message);
+    }finally{ setLoading(false); }
   }
 
-  async function submit(e) {
-    e.preventDefault();
-    setLoading(true);
-    setResult(null);
-    try {
-      const res = await fetch("/api/compute", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const j = await res.json();
-      if (!res.ok) throw new Error(j?.error || "Server error");
-      setResult(j);
-    } catch (err) {
-      alert("Error: " + err.message);
-    } finally {
-      setLoading(false);
-    }
+  async function downloadPDF(){
+    try{
+      const html2canvas = (await import("html2canvas")).default;
+      const { jsPDF } = await import("jspdf");
+      const node = reportRef.current;
+      const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#0f111a" });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const ratio = pageWidth / canvas.width;
+      const imgHeight = canvas.height * ratio;
+      pdf.addImage(imgData, "PNG", 0, 0, pageWidth, imgHeight);
+      pdf.save(`PavitraGyaan_Kundali_${(form.full_name||"User").replace(/\s+/g,'_')}.pdf`);
+    }catch(e){ alert("PDF error: "+e.message); }
   }
 
   return (
-    <div style={{ fontFamily: "system-ui, Inter, Arial", background:"#fff", minHeight:"100vh" }}>
-      <header style={{padding:"28px 16px 8px", textAlign:"center"}}>
-        <h1 style={{margin:0, fontSize:36}}>🕉️ Pavitra Gyaan — Kundali & Horoscope</h1>
-        <p style={{margin:"6px 0 0", color:"#666"}}>Indian audience ke liye IST-friendly, detailed, pandit-style reading</p>
-      </header>
+    <div className="container">
+      {/* HERO */}
+      <div className="hero">
+        <div className="badge">🕉️</div>
+        <div>
+          <div className="brand">Pavitra Gyaan</div>
+          <div className="sub">Kundali & Horoscope — Indian users ke liye IST-friendly, pandit-style guidance</div>
+        </div>
+      </div>
 
-      <main style={{maxWidth:980, margin:"18px auto", padding:"0 16px"}}>
-        {/* CARD: Form */}
-        <section style={{
-          background:"#f6f6f7", border:"1px solid #ececf0", borderRadius:16, padding:18
-        }}>
-          <form onSubmit={submit}>
-            <div style={{display:"grid", gridTemplateColumns:"1fr", gap:10}}>
-              <input name="full_name" value={form.full_name} onChange={update}
-                     placeholder="Full Name" style={inputStyle}/>
-              <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10}}>
-                <input name="dob" type="date" value={form.dob} onChange={update} style={inputStyle}/>
-                <input name="tob" type="time" value={form.tob} onChange={update} style={inputStyle}/>
-              </div>
-              <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10}}>
-                <input name="lat" value={form.lat} onChange={update} placeholder="Latitude" style={inputStyle}/>
-                <input name="lon" value={form.lon} onChange={update} placeholder="Longitude" style={inputStyle}/>
-              </div>
+      {/* FORM */}
+      <div className="card" style={{marginTop:16}}>
+        <form onSubmit={submit}>
+          <div className="row">
+            <input className="input" name="full_name" value={form.full_name} onChange={update} placeholder="Full Name" />
+            <div className="row" style={{gap:12}}>
+              <input className="input" type="date" name="dob" value={form.dob} onChange={update}/>
+              <input className="input" type="time" name="tob" value={form.tob} onChange={update}/>
+            </div>
+          </div>
 
-              <div style={{display:"grid", gridTemplateColumns:"1fr auto", gap:10, alignItems:"center"}}>
-                <input name="tz_offset_minutes" value={form.tz_offset_minutes} onChange={update}
-                       placeholder="TZ offset in minutes (IST=330)" style={inputStyle}/>
-                <button type="button" onClick={setIST} style={ghostBtn}>Set IST</button>
-              </div>
+          <div className="row" style={{marginTop:12}}>
+            <input className="input" name="lat" value={form.lat} onChange={update} placeholder="Latitude" />
+            <input className="input" name="lon" value={form.lon} onChange={update} placeholder="Longitude" />
+          </div>
 
-              <div style={{fontSize:12, color:"#666"}}>
-                Time zone: <b>{istLabel}</b> • Indian users ke liye default <b>330 (IST)</b> sahi rahega.
-              </div>
+          <div className="row" style={{marginTop:12}}>
+            <input className="input" name="tz_offset_minutes" value={form.tz_offset_minutes} onChange={update} placeholder="TZ offset minutes (IST = 330)" />
+            <button type="button" onClick={setIST} className="btnGhost">Set IST</button>
+          </div>
 
-              <div style={{display:"flex", gap:10, alignItems:"center"}}>
-                <button disabled={loading} style={primaryBtn}>{loading ? "Calculating…" : "Generate"}</button>
+          <div className="sub" style={{marginTop:8}}>Time zone: <b>{istLabel}</b></div>
+
+          <div style={{display:"flex", gap:12, marginTop:12}}>
+            <button className="btn" disabled={loading}>{loading ? "Calculating…" : "Generate Kundali"}</button>
+          </div>
+        </form>
+      </div>
+
+      {/* REPORT */}
+      {result && (
+        <div ref={reportRef} style={{marginTop:16}}>
+          {/* Meta */}
+          <h2 className="h2">Janma Vivaran</h2>
+          <div className="grid2">
+            <Meta label="Naam" value={result?.meta?.full_name}/>
+            <Meta label="Janma Tithi" value={result?.meta?.dob_human}/>
+            <Meta label="Janma Samay" value={`${result?.meta?.tob_human}  •  ${result?.meta?.tz_label}`}/>
+            <Meta label="Sthal" value={`${result?.meta?.lat}, ${result?.meta?.lon}`}/>
+          </div>
+
+          <div className="hr"></div>
+
+          {/* Summary big card */}
+          <div className="cardWhite">
+            <h3 className="h3">Saar</h3>
+            <div>{result.summary}</div>
+          </div>
+
+          {/* Sections grid */}
+          <h2 className="h2" style={{marginTop:18}}>Vistar se Margdarshan</h2>
+          <div className="grid2">
+            {Object.entries(result.sections).map(([k,v]) => (
+              <div key={k} className="cardWhite">
+                <h3 className="h3">{titleCase(k)}</h3>
+                <div>{v}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Remedies + Lucky */}
+          <div className="grid2" style={{marginTop:18}}>
+            <div className="cardWhite">
+              <h3 className="h3">Upaay</h3>
+              <ul style={{margin:"6px 0 0"}}>
+                {(result.remedies||[]).map((r,i)=><li key={i}>{r}</li>)}
+              </ul>
+            </div>
+            <div className="cardWhite">
+              <h3 className="h3">Lucky Signals</h3>
+              <div>Number: <b>{result?.lucky?.number}</b></div>
+              <div>Color: <b>{result?.lucky?.color}</b></div>
+              <div>Din: <b>{result?.lucky?.day}</b></div>
+            </div>
+          </div>
+
+          {/* Timeline + Dos/Don'ts */}
+          <div className="grid2" style={{marginTop:18}}>
+            <div className="cardWhite">
+              <h3 className="h3">Agle 30 Din — Focus</h3>
+              <ul style={{margin:"6px 0 0"}}>
+                {(result.timelines||[]).map((t,i)=>(
+                  <li key={i}><b>{t.window}:</b> {t.focus} — <i>{t.tip}</i></li>
+                ))}
+              </ul>
+            </div>
+            <div className="cardWhite">
+              <h3 className="h3">Do / Don’t</h3>
+              <div className="row" style={{gap:12}}>
+                <div>
+                  <b>Do</b>
+                  <ul style={{margin:"6px 0 0"}}>{(result.dos_donts?.do||[]).map((x,i)=><li key={i}>{x}</li>)}</ul>
+                </div>
+                <div>
+                  <b>Don’t</b>
+                  <ul style={{margin:"6px 0 0"}}>{(result.dos_donts?.avoid||[]).map((x,i)=><li key={i}>{x}</li>)}</ul>
+                </div>
               </div>
             </div>
-          </form>
-        </section>
+          </div>
 
-        {/* RESULTS */}
-        {result && (
-          <>
-            {/* META */}
-            <section style={{marginTop:18}}>
-              <h2 style={h2}>Janma Vivaran</h2>
-              <div style={cardsGrid}>
-                <MetaCard label="Naam" value={result?.meta?.full_name}/>
-                <MetaCard label="Janma Tithi" value={result?.meta?.dob_human}/>
-                <MetaCard label="Janma Samay" value={`${result?.meta?.tob_human} (${result?.meta?.tz_label})`}/>
-                <MetaCard label="Sthal (Lat, Lon)" value={`${result?.meta?.lat}, ${result?.meta?.lon}`}/>
-              </div>
-            </section>
+          {/* Actions */}
+          <div style={{display:"flex", gap:12, marginTop:16}}>
+            <button className="btn" onClick={downloadPDF}>Download PDF</button>
+            <a className="btnGhost" href={`https://wa.me/?text=${encodeURIComponent(
+              `Pavitra Gyaan – ${form.full_name} ki kundali ka saar:\n` +
+              (result.summary||"") + `\nRead: ${typeof window!=='undefined'?window.location.href:''}`
+            )}`} target="_blank" rel="noreferrer">Share on WhatsApp</a>
+          </div>
+        </div>
+      )}
 
-            {/* SUMMARY */}
-            <section style={{marginTop:18}}>
-              <h2 style={h2}>Saar (Pandit-style summary)</h2>
-              <div style={cardWhite}>{result?.summary}</div>
-            </section>
-
-            {/* SECTIONS */}
-            <section style={{marginTop:18}}>
-              <h2 style={h2}>Vistar Se Margdarshan</h2>
-              <div style={cardsGrid}>
-                {Object.entries(result?.sections || {}).map(([title, text]) => (
-                  <div key={title} style={cardWhite}>
-                    <h3 style={h3}>{title[0].toUpperCase()+title.slice(1)}</h3>
-                    <div>{text}</div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* REMEDIES + LUCKY */}
-            <section style={{marginTop:18}}>
-              <div style={{display:"grid", gridTemplateColumns:"2fr 1fr", gap:12}}>
-                <div style={cardWhite}>
-                  <h3 style={h3}>Upaay (Remedies)</h3>
-                  <ul style={{margin:"6px 0 0"}}>
-                    {(result?.remedies || []).map((r, i) => <li key={i}>{r}</li>)}
-                  </ul>
-                </div>
-                <div style={cardWhite}>
-                  <h3 style={h3}>Lucky Signals</h3>
-                  <div>Number: <b>{result?.lucky?.number}</b></div>
-                  <div>Color: <b>{result?.lucky?.color}</b></div>
-                  <div>Din: <b>{result?.lucky?.day}</b></div>
-                </div>
-              </div>
-            </section>
-
-            {/* TIMELINES + DO/DONTS */}
-            <section style={{marginTop:18}}>
-              <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12}}>
-                <div style={cardWhite}>
-                  <h3 style={h3}>Agle 30 Din — Focus</h3>
-                  <ul style={{margin:"6px 0 0"}}>
-                    {(result?.timelines || []).map((t, i) => (
-                      <li key={i}><b>{t.window}:</b> {t.focus} — <i>{t.tip}</i></li>
-                    ))}
-                  </ul>
-                </div>
-                <div style={cardWhite}>
-                  <h3 style={h3}>Do / Don’t</h3>
-                  <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8}}>
-                    <div>
-                      <b>Do</b>
-                      <ul style={{margin:"6px 0 0"}}>
-                        {(result?.dos_donts?.do || []).map((x, i) => <li key={i}>{x}</li>)}
-                      </ul>
-                    </div>
-                    <div>
-                      <b>Don’t</b>
-                      <ul style={{margin:"6px 0 0"}}>
-                        {(result?.dos_donts?.avoid || []).map((x, i) => <li key={i}>{x}</li>)}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </>
-        )}
-      </main>
-
-      <footer style={{textAlign:"center", fontSize:12, color:"#888", padding:"24px 0 32px"}}>
-        © Pavitra Gyaan — spiritual guidance for daily clarity
-      </footer>
+      <div className="footer">© Pavitra Gyaan • Designed for Indian users • IST-friendly</div>
     </div>
   );
 }
 
-// --- tiny UI helpers ---
-const inputStyle = { padding:10, border:"1px solid #d7d7db", borderRadius:10, width:"100%", background:"#fff" };
-const primaryBtn = { background:"#111", color:"#fff", padding:"10px 14px", border:"none", borderRadius:10, cursor:"pointer" };
-const ghostBtn = { background:"#fff", color:"#111", padding:"10px 14px", border:"1px solid #d7d7db", borderRadius:10, cursor:"pointer" };
-const h2 = { margin:"6px 0 10px", fontSize:22 };
-const h3 = { margin:"0 0 6px", fontSize:16 };
-const cardWhite = { background:"#fff", border:"1px solid #ececf0", borderRadius:12, padding:14 };
-const cardsGrid = { display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 };
-
-function MetaCard({label, value}) {
+function Meta({label, value}) {
   return (
-    <div style={cardWhite}>
-      <div style={{fontSize:12, color:"#666"}}>{label}</div>
-      <div style={{fontSize:16}}><b>{value || "—"}</b></div>
+    <div className="cardWhite">
+      <div className="metaKey">{label}</div>
+      <div className="metaVal">{value || "—"}</div>
     </div>
   );
 }
+function titleCase(s){ return s.slice(0,1).toUpperCase()+s.slice(1); }
