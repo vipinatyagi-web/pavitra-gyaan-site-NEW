@@ -1,0 +1,32 @@
+:root{
+  --bg:#0b0b0f;          /* deep noir */
+  --panel:#121218;       /* card bg */
+  --panel-2:#0e0e14;
+  --bd:#222332;
+  --txt:#f5f7fb;         /* text */
+  --sub:#a7aec3;         /* sub text */
+  --brand:#9d7bff;       /* spiritual violet */
+  --accent:#ffd166;      /* warm gold */
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:linear-gradient(180deg,#0b0b0f, #0b0b0f 40%, #11131d 100%);color:var(--txt);font-family:Inter,system-ui,Segoe UI,Arial,sans-serif}
+a{color:inherit}
+.container{max-width:1080px;margin:0 auto;padding:24px}
+.hero{display:flex;align-items:center;gap:14px}
+.brand{font-size:40px;font-weight:800;letter-spacing:.2px}
+.sub{color:var(--sub);font-size:14px}
+.card{background:var(--panel);border:1px solid var(--bd);border-radius:16px;padding:16px}
+.cardWhite{background:#0f111a;border:1px solid #202232;border-radius:16px;padding:16px}
+.input{width:100%;padding:12px;border:1px solid #2a2b3b;border-radius:12px;background:var(--panel-2);color:var(--txt)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.btn{background:var(--brand);border:none;color:white;padding:12px 16px;border-radius:12px;cursor:pointer;font-weight:600}
+.btnGhost{background:transparent;border:1px solid #2a2b3b;color:var(--txt);padding:12px 16px;border-radius:12px;cursor:pointer}
+.h2{margin:18px 0 8px;font-size:22px}
+.h3{margin:0 0 6px;font-size:16px;color:#e8eaf7}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.metaKey{color:var(--sub);font-size:12px}
+.metaVal{font-size:16px;font-weight:600}
+.badge{display:inline-block;background:#181b2a;border:1px solid #282b3f;padding:6px 10px;border-radius:999px;color:#d5d9ff}
+.footer{color:var(--sub);font-size:12px;text-align:center;padding:28px 0 40px}
+.hr{height:1px;background:#1b1d2b;border:none;margin:16px 0}
