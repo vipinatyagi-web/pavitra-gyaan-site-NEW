@@ -1,48 +1,38 @@
+// pages/api/geo.js
 
-import fetch from "node-fetch";
+export default async function handler(req, res) {
+  const { query, lat, lon } = req.query;
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
-function extractCountry(components){
-  try{
-    const c = (components||[]).find(x => x.types?.includes("country"));
-    return c?.long_name || c?.short_name || "";
-  }catch{return ""}
-}
+  if (!apiKey) {
+    return res.status(500).json({ error: 'Google API key missing.' });
+  }
 
-export default async function handler(req, res){
-  const key = process.env.GOOGLE_MAPS_API_KEY;
-  if(!key) return res.status(400).json({error:"Missing GOOGLE_MAPS_API_KEY"});
-
-  const { query, lat, lon } = req.query || {};
-
-  try{
-    let location = null, formatted = "", country = "";
-    if (query){
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${key}`;
-      const g = await fetch(url); const gj = await g.json();
-      if(gj.status!=="OK" || !gj.results?.length) return res.status(404).json({error:"Place not found"});
-      const r = gj.results[0];
-      location = r.geometry.location;
-      formatted = r.formatted_address;
-      country = extractCountry(r.address_components);
-    }else if(lat && lon){
-      location = { lat: parseFloat(lat), lng: parseFloat(lon) };
-      formatted = `${lat}, ${lon}`;
-    }else{
-      return res.status(400).json({error:"Provide ?query=City or ?lat=..&lon=.."});
+  try {
+    let geoData;
+    if (query) {
+      // ... Call Google Geocoding API with query
+    } else if (lat && lon) {
+      // ... Call Google Geocoding API with lat/lon
+    } else {
+      return res.status(400).json({ error: 'Missing query or lat/lon.' });
     }
 
-    const ts = Math.floor(Date.now()/1000);
-    const tzUrl = `https://maps.googleapis.com/maps/api/timezone/json?location=${location.lat},${location.lng}&timestamp=${ts}&key=${key}`;
-    const tz = await fetch(tzUrl); const tzj = await tz.json();
-    if(tzj.status!=="OK") return res.status(500).json({error:"Timezone lookup failed", detail: tzj.status});
-    const offsetMinutes = Math.round(((tzj.rawOffset||0)+(tzj.dstOffset||0))/60);
+    // ... Handle response and find lat/lng
 
-    return res.status(200).json({
-      lat: location.lat, lon: location.lng,
-      tz_offset_minutes: offsetMinutes,
-      address: formatted, country: country || tzj.timeZoneId || ""
+    // ... Call Google Time Zone API with the found lat/lng
+    const tzResponse = await fetch(`https://maps.googleapis.com/maps/api/timezone/json?...`);
+    const tzData = await tzResponse.json();
+
+    // ... Format and return the final data
+    res.status(200).json({
+        lat: location.lat,
+        lon: location.lng,
+        timezoneOffsetMinutes: Math.round((tzData.dstOffset + tzData.rawOffset) / 60),
+        fullAddress: geoData.results[0].formatted_address,
     });
-  }catch(e){
-    return res.status(500).json({error:e.message||"Unknown error"});
+
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch location data.' });
   }
 }
