@@ -1,51 +1,177 @@
-import fetch from "node-fetch";
+// No external API required. Deterministic, pandit-style rule engine.
 
-// --- simple deterministic rule-based fallback (no API needed) ---
-function fallbackHoroscope({ full_name = "", dob, tob, lat, lon, tz_offset_minutes }) {
-  // Safe parsing
-  const date = new Date(dob + "T" + (tob || "00:00") + ":00");
-  const day = isNaN(date.getTime()) ? 1 : (date.getUTCDay() || 7); // 1..7
-  const hour = isNaN(date.getTime()) ? 12 : date.getHours();       // 0..23
-  const nameLen = (full_name || "").trim().length || 5;
-  const seed = (day * 37 + hour * 13 + Math.round((+lat || 0) + (+lon || 0)) + nameLen) % 100;
+function fmtDateHuman(dob) {
+  // dob = "YYYY-MM-DD"
+  try {
+    const [y,m,d] = dob.split("-").map(Number);
+    const date = new Date(Date.UTC(y, m-1, d));
+    return date.toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" });
+  } catch { return dob; }
+}
+function fmtTimeHuman(tob24) {
+  // "HH:MM" -> "hh:mm AM/PM"
+  try {
+    const [H, M] = tob24.split(":").map(Number);
+    const d = new Date(); d.setHours(H); d.setMinutes(M||0);
+    return d.toLocaleTimeString("en-IN", { hour:"2-digit", minute:"2-digit" });
+  } catch { return tob24; }
+}
+function tzLabel(mins) {
+  const m = parseInt(mins||0,10);
+  if (m === 330) return "IST (UTC+05:30)";
+  const sign = m >= 0 ? "+" : "-";
+  const h = Math.floor(Math.abs(m)/60);
+  const mm = Math.abs(m)%60;
+  return `UTC${sign}${String(h).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
+}
 
-  // Tiny rule bank
+function seeded(name, dob, tob, lat, lon) {
+  const str = `${name}|${dob}|${tob}|${lat}|${lon}`;
+  // simple xorshift-ish
+  let h = 0;
+  for (let i=0;i<str.length;i++) h = (h*131 + str.charCodeAt(i)) >>> 0;
+  return (n) => (h = (1103515245*h + 12345) >>> 0) % n;
+}
+
+function buildReading(payload) {
+  const { full_name="", dob, tob, lat, lon, tz_offset_minutes } = payload;
+  const pick = seeded(full_name, dob, tob, lat, lon);
+
+  // Buckets
+  const tones = [
+    "ziddi goals ko bhi warmth se hasil karoge",
+    "mehnat ka seedha phal milega, lekin discipline zaruri",
+    "calm mind + sharp action se progress tez",
+    "jo cheez ruk rahi thi, ab smoothly aage badhegi",
+    "naye mauke front foot pe milenge — bas shisht bol-chal rakho"
+  ];
   const career = [
-    "kaam me clarity milegi; chhote goals set karo.",
-    "networking se fayda hoga; senior se guidance lo.",
-    "focus thoda bhatak sakta hai; deep-work 45 min try karo.",
-    "naya skill pick karo; resume me ek line add hogi.",
-    "leadership chances; apni baat calmly rakhna."
+    "10th-house energy jaise leadership vibes — apni baat confidently rakho.",
+    "colleague support strong — team me visibility banao.",
+    "skill upgrade (Excel/SQL/AI) se next ladder jaldi milega.",
+    "job change soch rahe ho to profile polish karo, 2 high-quality applications bhejo.",
+    "client-facing kaam me gentle but firm rehna — trust build hoga."
+  ];
+  const money = [
+    "fixed खर्च control karo; SIP/FD se stability lao.",
+    "impulsive kharche avoid; 70-20-10 rule follow karo.",
+    "digital tools (expense tracker) se paisa bachao.",
+    "emi prepayment ka ek chhota target set karo.",
+    "part-time skill se side income ka ek seed lagao."
   ];
   const love = [
-    "baat-cheet me softness rakho; ego avoid karo.",
-    "old message yaad aayega; mature reply karo.",
-    "family time se bonding strong hogi.",
-    "past ko park karo; present me invest karo.",
-    "honest appreciation do; magic dikhai dega."
+    "soft tone + active listening se misunderstandings door.",
+    "single? common-values waale logon se connect banta dikhega.",
+    "married couples ke liye short evening walk magic karega.",
+    "ego ko thoda park karo — appreciation first policy.",
+    "boundaries clear rakhte hue bhi pyaar dikhana zaruri."
   ];
   const health = [
-    "paani zyada piyo; 15-min walk ka vow lo.",
-    "late-night screen time kam karo; neend better hogi.",
-    "light stretching & surya namaskar help karega.",
-    "overeating avoid; simple satvik khana choose karo.",
-    "mind ko calm rakhne ko 5-min deep breathing karo."
+    "15-min surya namaskar + 8 glass paani — baseline perfect.",
+    "screen-time curfew rakho (11 PM ke baad nahi).",
+    "gut-friendly satvik diet: khichdi / dahi / ghee right now.",
+    "back/neck ke liye micro-break stretching alarms lagao.",
+    "mind ko calm rakhne ko 5-min box breathing."
+  ];
+  const family = [
+    "parents/elders se 10-min call — blessings uplift deti hain.",
+    "ghar me ek chhota diya/agarbatti roz ka ritual banao.",
+    "siblings ke saath bad jokes bhi bonding heal karta hai.",
+    "ghar ke kisi ek kaam ki responsibility low-drama mein le lo.",
+    "joint decision me sabki suno, aakhir me calmly summarise karo."
+  ];
+  const edu = [
+    "daily 45-min deep focus slot fix karo; phone silent.",
+    "notes ko smart cards (Q/A) me convert karo.",
+    "mock tests se reality check — weak area pe double down.",
+    "YouTube/playlist se curated learning — random scrolling nahi.",
+    "mentor/peer group ke saath weekly check-in rakho."
+  ];
+  const travel = [
+    "short temple visit ya nature walk se mind reset.",
+    "office commute me podcast/audio-gita useful rahega.",
+    "yatra plan me budget pehle lock; impulsive add-ons avoid.",
+    "north-east direction ke short trips light aur productive.",
+    "solo reflection trip se clarity boost milega."
+  ];
+  const spiritual = [
+    "Gayatri mantra 11 बार subah — mann me shanti aur focus.",
+    "Shiv Panchakshari (ॐ नमः शिवाय) 108 — vaani me madhurta.",
+    "Hanuman Chalisa mool — protection & courage uplift.",
+    "Tulsi ko jal & deep daan — grih shakti strong.",
+    "geeta ka ek shlok roz — decision me clarity."
+  ];
+  const remedies = [
+    "pehli roti gau-mata ke liye; karmic shuddhi.",
+    "sunday ko Surya ko jal + आदित्य हृदय स्तोत्र.",
+    "mangalwar ko 11 deep daan — obstacles कम.",
+    "budhwar ko kanjak/kanya ko meetha prasad.",
+    "dakshin-abhimuk deepak shaniwaar ko 11-min."
+  ];
+  const luckyColor = ["Kesariya", "Peacock Blue", "Maroon", "Emerald", "White", "Royal Blue", "Turquoise"];
+  const luckyDay = ["Somvaar", "Mangalvaar", "Budhvaar", "Guruvar", "Shukravaar", "Shanivaar", "Ravivaar"];
+
+  // Deterministic picks
+  const tone = tones[pick(tones.length)];
+  const sec = (arr, n=1) => Array.from({length:n}, (_,i)=>arr[pick(arr.length+i)]);
+  const [c1,c2] = sec(career,2);
+  const [m1] = sec(money,1);
+  const [l1] = sec(love,1);
+  const [h1] = sec(health,1);
+  const [f1] = sec(family,1);
+  const [e1] = sec(edu,1);
+  const [t1] = sec(travel,1);
+  const [s1] = sec(spiritual,1);
+  const rems = sec(remedies,3);
+  const lucky = {
+    number: (pick(90)+10), // 10..99
+    color: luckyColor[pick(luckyColor.length)],
+    day: luckyDay[pick(luckyDay.length)]
+  };
+
+  const istMeta = {
+    full_name,
+    dob_human: fmtDateHuman(dob),
+    tob_human: fmtTimeHuman(tob),
+    tz_label: tzLabel(tz_offset_minutes),
+    lat, lon
+  };
+
+  const summary = `Aaj ki overall energy: ${tone}. Apni language me softness rakhte hue
+focused action loge to परिणाम साफ दिखेगा. Jo kaam अटका था, usme
+चोटे-चोटे measurable steps rakho — progress self-evident ہوگی.`;
+
+  const sections = {
+    career: `${c1} Aur ${c2}`,
+    money: m1,
+    love: l1,
+    health: h1,
+    family: f1,
+    education: e1,
+    travel: t1,
+    spiritual: s1
+  };
+
+  const timelines = [
+    { window: "Next 7 days", focus: "files/loose ends close karo", tip: "2 tasks per day rule" },
+    { window: "Next 30 days", focus: "skill upgrade + networking", tip: "3 seniors ko value-DM" },
+    { window: "Next 90 days", focus: "financial discipline", tip: "70-20-10 spending rule" }
   ];
 
-  const pick = (arr, n) => arr[n % arr.length];
-  const h = `Career: ${pick(career, seed)}\nLove: ${pick(love, seed+7)}\nHealth: ${pick(health, seed+14)}\n(Confidence: Medium — rule-based reading)`;
+  const dos_donts = {
+    do: ["subah jaldi uthna", "45-min deep work", "soft communication", "daily prarthana"],
+    avoid: ["late-night doomscrolling", "impulsive kharche", "ego arguments", "neglecting water"]
+  };
 
-  const bullets = [];
-  if (hour >= 5 && hour <= 10) bullets.push("Subah janam — discipline aur sunrise energy strong.");
-  if (hour >= 11 && hour <= 15) bullets.push("Din ka janam — public image & pragati pe focus.");
-  if (hour >= 16 && hour <= 20) bullets.push("Shaam janam — relationships & collaboration me growth.");
-  if (hour >= 21 || hour <= 4)  bullets.push("Raat janam — intuition & research me strength.");
-
-  if ((+lon || 0) > 75) bullets.push("East-longitude signal — fast decision lena faydemand.");
-  if ((+lat || 0) > 25) bullets.push("Uttar disha signal — learning/study se uplift.");
-  if (nameLen % 2 === 0) bullets.push("Name-vibration: even — stability; odd — creativity.");
-
-  return { horoscope: h, bullets };
+  return {
+    meta: istMeta,
+    summary,
+    sections,
+    remedies: rems,
+    lucky,
+    timelines,
+    dos_donts
+  };
 }
 
 export default async function handler(req, res) {
@@ -56,55 +182,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Missing fields: dob, tob, lat, lon required" });
   }
 
-  const key = process.env.OPENAI_API_KEY?.trim();
-
-  // If no API key, return fallback immediately
-  if (!key) {
-    const fb = fallbackHoroscope({ full_name, dob, tob, lat, lon, tz_offset_minutes });
-    return res.status(200).json({ raw_model: "", ...fb });
-  }
-
-  // With API key → try GPT; on error, fall back gracefully
   try {
-    const userPrompt = `You are an expert Vedic astrology assistant.
-Birth:
-- Name: ${full_name || "N/A"}
-- Date: ${dob}  Time: ${tob}
-- Lat: ${lat}  Lon: ${lon}  TZ(min): ${tz_offset_minutes || "unknown"}
-Task:
-1) 3-4 lines Hinglish horoscope (career, love, health) — warm & human.
-2) Return JSON: {"horoscope": "...", "bullets": ["..."]}. No extra text. Short, practical lines.`;
-
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: "You are a helpful astrology assistant." },
-          { role: "user", content: userPrompt },
-        ],
-        max_tokens: 400,
-        temperature: 0.6
-      })
-    });
-
-    const data = await r.json();
-    if (!r.ok) {
-      // Fallback on any OpenAI error
-      const fb = fallbackHoroscope({ full_name, dob, tob, lat, lon, tz_offset_minutes });
-      return res.status(200).json({ raw_model: "", ...fb, note: data?.error?.message || "fallback" });
-    }
-
-    const text = data?.choices?.[0]?.message?.content || "";
-    let parsed = null; try { parsed = JSON.parse(text); } catch {}
-    if (!parsed?.horoscope) {
-      const fb = fallbackHoroscope({ full_name, dob, tob, lat, lon, tz_offset_minutes });
-      return res.status(200).json({ raw_model: text, ...fb, note: "fallback-parse" });
-    }
-    return res.status(200).json({ raw_model: text, horoscope: parsed.horoscope, bullets: parsed.bullets || [] });
+    const payload = { full_name, dob, tob, lat, lon, tz_offset_minutes };
+    const out = buildReading(payload);
+    return res.status(200).json(out);
   } catch (e) {
-    const fb = fallbackHoroscope({ full_name, dob, tob, lat, lon, tz_offset_minutes });
-    return res.status(200).json({ raw_model: "", ...fb, note: "fallback-error" });
+    return res.status(500).json({ error: e.message || "Unknown error" });
   }
 }
