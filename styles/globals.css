@@ -1,70 +1,34 @@
 
-:root{
-  --bg:#0c0f14;
-  --panel:#111622;
-  --panel2:#0d1220;
-  --bd:#1e2740;
-  --txt:#f5f7ff;
-  --sub:#9aa3c2;
-  --brand:#7d9cff;
-  --brand2:#b98bff;
-  --gold:#ffd166;
-  --ok:#45d39c;
-  --warn:#ffb86c;
-}
-*{box-sizing:border-box}
-html,body{margin:0;padding:0;background:
- radial-gradient(900px 600px at 12% -10%, rgba(125,156,255,.18), transparent 60%),
- radial-gradient(900px 600px at 88% 0%, rgba(185,139,255,.18), transparent 60%),
- linear-gradient(180deg,#0b0f16 0%, #0c0f14 60%, #0e1220 100%);
-color:var(--txt);font-family:Inter,system-ui,Segoe UI,Arial,sans-serif}
-a{color:inherit;text-decoration:none}
+:root{--bg:#0c0f14;--panel:#111622;--panel2:#0d1220;--bd:#1e2740;--txt:#f5f7ff;--sub:#9aa3c2;--brand:#7d9cff;--brand2:#b98bff;--gold:#ffd166}
+*{box-sizing:border-box}html,body{margin:0;padding:0;background:linear-gradient(180deg,#0b0f16,#0c0f14 60%,#0e1220);color:var(--txt);font-family:Inter,system-ui,Segoe UI,Arial,sans-serif}
 .container{max-width:1080px;margin:0 auto;padding:22px}
 .header{display:flex;align-items:center;gap:14px}
 .logo{width:42px;height:42px;border-radius:12px;background:conic-gradient(from 120deg, var(--brand),var(--brand2),var(--gold),var(--brand));display:flex;align-items:center;justify-content:center;color:#0c0f14;font-weight:900}
-.brand{font-size:34px;font-weight:900;letter-spacing:.2px}
+.brand{font-size:34px;font-weight:900}
 .sub{color:var(--sub);font-size:13px}
 .card{background:var(--panel);border:1px solid var(--bd);border-radius:16px;padding:16px}
 .cardSoft{background:var(--panel2);border:1px solid var(--bd);border-radius:16px;padding:14px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.input{width:100%;padding:12px;border:1px solid #263255;border-radius:12px;background:#0e1526;color:var(--txt)}
-.select{width:100%;padding:12px;border:1px solid #263255;border-radius:12px;background:#0e1526;color:var(--txt)}
-.btn{background:linear-gradient(135deg,var(--brand),var(--brand2));border:none;color:#0c0f14;padding:12px 16px;border-radius:12px;cursor:pointer;font-weight:800;box-shadow:0 10px 28px rgba(125,156,255,.35)}
+.input,.select{width:100%;padding:12px;border:1px solid #263255;border-radius:12px;background:#0e1526;color:var(--txt)}
+.btn{background:linear-gradient(135deg,var(--brand),var(--brand2));border:none;color:#0c0f14;padding:12px 16px;border-radius:12px;cursor:pointer;font-weight:800}
 .btnGhost{background:transparent;border:1px solid #263255;color:var(--txt);padding:12px 16px;border-radius:12px;cursor:pointer;font-weight:700}
-.btnGold{background:linear-gradient(135deg,#ffe08a,#ffd166);border:none;color:#111;padding:12px 16px;border-radius:12px;cursor:pointer;font-weight:800;box-shadow:0 8px 28px rgba(255,209,102,.25)}
-.h2{margin:18px 0 8px;font-size:22px}
-.h3{margin:0 0 6px;font-size:16px;color:#e8eaf7}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.metaKey{color:var(--sub);font-size:12px}
-.metaVal{font-size:16px;font-weight:800}
-.footer{color:var(--sub);font-size:12px;text-align:center;padding:28px 0 40px}
-.hr{height:1px;background:#1a2140;border:none;margin:16px 0}
-
 .tabs{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 .tab{padding:8px 12px;border-radius:999px;border:1px solid #263255;background:#0f162a;cursor:pointer;color:#dfe3ff;font-weight:700}
 .tab.active{background:linear-gradient(135deg,#171c38,#202754);border-color:#3a3d5a}
-
-/* Stepper */
-.stepper{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
-.step{display:flex;gap:8px;align-items:center;padding:8px 12px;border:1px solid #263255;border-radius:999px;background:#0f162a;color:#dfe3ff;cursor:pointer}
-.step.active{background:linear-gradient(135deg,#171c38,#202754);border-color:#3a3d5a}
-.dot{width:22px;height:22px;border-radius:999px;background:linear-gradient(135deg,#b98bff,#7d9cff);color:#0c0f14;display:flex;align-items:center;justify-content:center;font-weight:900}
-
-/* Accordion */
+.h3{margin:0 0 6px;font-size:16px;color:#e8eaf7}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.metaKey{color:var(--sub);font-size:12px}.metaVal{font-size:16px;font-weight:800}
+.hr{height:1px;background:#1a2140;border:none;margin:16px 0}
+.footer{color:var(--sub);font-size:12px;text-align:center;padding:28px 0 40px}
+.badge{display:inline-block;background:#141a2c;border:1px solid #263255;padding:6px 10px;border-radius:999px;color:#dfe3ff;font-size:12px}
 .acc{border:1px solid #263255;border-radius:12px;background:#0e1426;margin-top:8px}
 .accHead{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer}
 .accBody{padding:12px;border-top:1px solid #1e2740}
-
-/* Chat */
 .chatDock{position:fixed;right:18px;bottom:18px;z-index:50}
-.chatBtn{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#0c0f14;border:none;border-radius:999px;padding:12px 16px;font-weight:900;cursor:pointer;box-shadow:0 16px 46px rgba(110,168,255,.45)}
-.chatPanel{position:fixed;right:18px;bottom:76px;width:360px;max-height:70vh;overflow:hidden;border-radius:18px;background:#0c1020;border:1px solid #23284a;box-shadow:0 28px 80px rgba(0,0,0,.5)}
+.chatBtn{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#0c0f14;border:none;border-radius:999px;padding:12px 16px;font-weight:900;cursor:pointer}
+.chatPanel{position:fixed;right:18px;bottom:76px;width:360px;max-height:70vh;overflow:hidden;border-radius:18px;background:#0c1020;border:1px solid #23284a}
 .chatHead{padding:10px 12px;border-bottom:1px solid #23284a;display:flex;justify-content:space-between;align-items:center}
 .chatBody{padding:12px;overflow:auto;max-height:54vh}
-.msg{margin:8px 0;padding:10px 12px;border-radius:12px}
-.user{background:#1a2036}
-.bot{background:#0f142a;border:1px solid #23284a}
+.msg{margin:8px 0;padding:10px 12px;border-radius:12px}.user{background:#1a2036}.bot{background:#0f142a;border:1px solid #23284a}
 .chatInputWrap{display:flex;gap:8px;padding:10px;border-top:1px solid #23284a;background:#0c1020}
 .chatInput{flex:1;padding:10px;border:1px solid #263255;border-radius:10px;background:#0f162a;color:var(--txt)}
-
-.badge{display:inline-block;background:#141a2c;border:1px solid #263255;padding:6px 10px;border-radius:999px;color:#dfe3ff;font-size:12px}
